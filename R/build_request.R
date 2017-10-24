@@ -3,6 +3,8 @@
 NULL
 
 #' Build separate subcondition of SQL request filter
+#'
+#' Build separate subcondition of SQL request filter.
 #' Conditions can be vector.
 #'
 
@@ -37,6 +39,7 @@ buildReqFilter <- function(field, conds, add=TRUE){
 }
 
 #' Build SQL request restriction based on user-defined set of fields
+#'
 #' @param begin Start date-range
 #' @param end End of date-range
 #' @param ... Custom named params
@@ -46,9 +49,10 @@ buildReqFilter <- function(field, conds, add=TRUE){
 buildReqLimits <- function(begin, end, region=NULL, prefix=NULL, channel=NULL, event=NULL,
                            segment=NULL, serial_mask=NULL) {
   # region, prefix, channel -- вектора
-  # собираем общие условия в соотв. с фильтрами
   params <- list(...)
-  # 1. Убедимся, что на вход поступают допустимые значения
+  # Убедимся, что на вход поступают допустимые значения
+  checkmate::assertNames(names(params), subset.of=c("region", "prefix", "segment", "channel", "event"))
+
   # begin, end -- Date
   # 2. Если во входных условиях есть параметр serial_mask, то он требует специализированной обработки
   serial_mask <- params$serial_mask
