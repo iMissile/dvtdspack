@@ -47,27 +47,34 @@ buildReqFilter <- function(field, conds, add=TRUE){
 #' @rdname build_request
 #' @export
 buildReqLimits <- function(begin, end, region=NULL, prefix=NULL, channel=NULL, event=NULL,
-                           segment=NULL, serial_mask=NULL) {
-  # region, prefix, channel -- вектора
-  params <- list(...)
+                           segment=NULL, serial_mask="") {
+  # region, prefix, channel -- могут быть векторами
+  # params <- list(...)
   # Убедимся, что на вход поступают допустимые значения
-  checkmate::assertNames(names(params), subset.of=c("region", "prefix", "segment", "channel", "event"))
+  # checkmate::assertNames(names(params), subset.of=c("region", "prefix", "segment", "channel", "event"))
+  # checkmate::checkDate(c(lubridate::ymd("17-12-03"), lubridate::ymd("17-12-07")), any.missing=FALSE, len=2, null.ok=FALSE)
+  checkmate::checkDate(begin, any.missing=FALSE, len=1, null.ok=FALSE)
+  checkmate::checkDate(end, any.missing=FALSE, len=1, null.ok=FALSE)
+  checkmate::qassert(serial_mask, "S=1")
 
-  # begin, end -- Date
-  # 2. Если во входных условиях есть параметр serial_mask, то он требует специализированной обработки
-  serial_mask <- params$serial_mask
-
-
-  res <- paste0(paste0(" date >= '", begin, "' AND date <= '", end, "' "),
-                # указали жестко длительность, в секундах
-                paste0(" AND duration>0*60 AND duration <2*60*60 "),
-                buildReqFilter("region", region, add=TRUE),
-                buildReqFilter("prefix", prefix, add=TRUE),
-                buildReqFilter("segment", segment, add=TRUE),
-                buildReqFilter("channelId", channel, add=TRUE),
-                buildReqFilter("switchEvent", event, add=TRUE),
-                ifelse(serial_mask=="", "", paste0(" AND like(serial, '%", serial_mask, "%') "))
+  fields <- purrr::map2_chr(
+    c("region", "prefix", "segment", "channelId", "switchEvent"),
+    c(region, prefix, segment, channel, event),
+    buildReqFilter, add=TRUE
   )
+
+  res <- stringi::stri_join(" date>='", begin, "' AND date<='", end, "'",
+                            # указали жестко длительность, в секундах
+                            "AND duration>0*60 AND duration <2*60*60",
+                            buildReqFilter("region", region, add=TRUE),
+                            buildReqFilter("prefix", prefix, add=TRUE),
+                            buildReqFilter("segment", segment, add=TRUE),
+                            buildReqFilter("channelId", channel, add=TRUE),
+                            buildReqFilter("switchEvent", event, add=TRUE),
+                            #ifelse(serial_mask=="", "", с("AND like(serial, '%", serial_mask, "%') ")),
+  sep=" ")
+
+  res
 }
 
 
