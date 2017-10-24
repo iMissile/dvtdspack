@@ -1,0 +1,19 @@
+Package: dvtdspack
+Type: Package
+Title: Set of Functions Used in DVT Shiny App
+Version: 0.1.0
+Authors@R: person("Ilya", "Shutov", email="ilya.shutov@media-tel.ru", role=c("aut", "cre"))
+Maintainer: The package maintainer <ilya.shutov@media-tel.ru>
+Description: More about what it does (maybe more than one line)
+    Use four spaces when indenting paragraphs within the Description.
+License: GPL (>= 3)
+Encoding: UTF-8
+LazyData: true
+URL: https://gitlab.com/ishutov/dvtdspack
+RoxygenNote: 6.0.1
+Imports: 
+    checkmate,
+    stringi,
+    purrr
+Suggests: 
+    testthat
