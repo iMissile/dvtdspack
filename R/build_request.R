@@ -42,8 +42,13 @@ buildReqFilter <- function(field, conds, add=TRUE){
 #'
 #' @param begin Start date-range
 #' @param end End of date-range
-#' @param ... Custom named params
-#' @return Unfolded into string filter condition
+#' @param region Region filter
+#' @param prefix Prefix filter
+#' @param channel Channel filter
+#' @param event Event filter
+#' @param segment Segment filter
+#' @param serial_mask Substring to find in serian number whithin %LIKE% condition
+#' @return Limits unfolded into string
 #' @rdname build_request
 #' @export
 buildReqLimits <- function(begin, end, region=NULL, prefix=NULL, channel=NULL, event=NULL,
@@ -53,28 +58,24 @@ buildReqLimits <- function(begin, end, region=NULL, prefix=NULL, channel=NULL, e
   # Убедимся, что на вход поступают допустимые значения
   # checkmate::assertNames(names(params), subset.of=c("region", "prefix", "segment", "channel", "event"))
   # checkmate::checkDate(c(lubridate::ymd("17-12-03"), lubridate::ymd("17-12-07")), any.missing=FALSE, len=2, null.ok=FALSE)
-  checkmate::checkDate(begin, any.missing=FALSE, len=1, null.ok=FALSE)
-  checkmate::checkDate(end, any.missing=FALSE, len=1, null.ok=FALSE)
+  checkmate::assertDate(begin, any.missing=FALSE, len=1, null.ok=FALSE)
+  checkmate::assertDate(end, any.missing=FALSE, len=1, null.ok=FALSE)
   checkmate::qassert(serial_mask, "S=1")
 
-  fields <- purrr::map2_chr(
-    c("region", "prefix", "segment", "channelId", "switchEvent"),
-    c(region, prefix, segment, channel, event),
-    buildReqFilter, add=TRUE
-  )
+  res <- stringi::stri_join(
+    stringi::stri_join(" date>='", begin, "' AND date<='", end, "'", sep=""),
+    # указали жестко длительность, в секундах
+    "AND duration>0*60 AND duration <2*60*60",
+    buildReqFilter("region", region, add=TRUE),
+    buildReqFilter("prefix", prefix, add=TRUE),
+    buildReqFilter("segment", segment, add=TRUE),
+    buildReqFilter("channelId", channel, add=TRUE),
+    buildReqFilter("switchEvent", event, add=TRUE),
+    ifelse(serial_mask=="", "", с("AND like(serial, '%", serial_mask, "%') ")),
+    sep=" ")
 
-  res <- stringi::stri_join(" date>='", begin, "' AND date<='", end, "'",
-                            # указали жестко длительность, в секундах
-                            "AND duration>0*60 AND duration <2*60*60",
-                            buildReqFilter("region", region, add=TRUE),
-                            buildReqFilter("prefix", prefix, add=TRUE),
-                            buildReqFilter("segment", segment, add=TRUE),
-                            buildReqFilter("channelId", channel, add=TRUE),
-                            buildReqFilter("switchEvent", event, add=TRUE),
-                            #ifelse(serial_mask=="", "", с("AND like(serial, '%", serial_mask, "%') ")),
-  sep=" ")
-
-  res
+  # нормализуем пробелы
+  stringi::stri_replace_all_regex(res, "(\\s+)", " ")
 }
 
 
