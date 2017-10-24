@@ -18,7 +18,7 @@ buildReqLimits(begin, end, region = NULL, prefix = NULL, channel = NULL,
 are absent (NULL/NA or 'all' value) any restrictions will be omitted}
 
 \item{add}{Type of unfolding. TRUE value shows that filter will be a part of
-complex restriction and should be ADDED}
+complex restriction and should be added}
 
 \item{begin}{Start date-range}
 
@@ -34,7 +34,7 @@ Unfolded into string filter condition
 \description{
 Set of helpers to build SQL request
 
-Build separate subcondition of SQL request filter
+Build separate subcondition of SQL request filter.
 Conditions can be vector.
 
 Build SQL request restriction based on user-defined set of fields
