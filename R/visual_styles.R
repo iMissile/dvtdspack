@@ -25,3 +25,25 @@ theme_dvt <- function(target="screen"){
 
   ret # + theme(axis.text.x = element_text(angle=90))
 }
+
+##' Cairo initialization in linux with Roboto Condensed font
+##'
+#' @export
+initRCfontInCairo <- function(){
+  if (Sys.info()["sysname"] == "Linux") {
+    # Server environment
+    Cairo::CairoFonts(
+      regular="Roboto Condensed:style=Regular",
+      bold="Roboto Condensed:style=Bold",
+      italic="Roboto Condensed:style=Italic",
+      bolditalic="Roboto Condensed:style=Bold Italic,BoldItalic",
+      symbol="Symbol"
+    )
+  } else {
+    # local development, windows
+    # ?? extrafont::font_import() can save us??
+    # windowsFonts(Verdana="TT Verdana")
+    # par(family="Roboto Condensed")
+    # par(family="Times")
+  }
+}
