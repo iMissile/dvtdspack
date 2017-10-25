@@ -1,20 +1,14 @@
-#' Set of helpers to build SQL request
-#' @name build_request
-NULL
-
-#' Build separate subcondition of SQL request filter
+#' Construct separate condition of SQL request filter
 #'
-#' Build separate subcondition of SQL request filter.
+#' Construct separate condition of SQL request filter.
 #' Conditions can be vector.
 #'
-
 #' @param field DB field to include in filter restriction
 #' @param conds Character vector of permitted field values. In case conditions
 #'   are absent (NULL/NA or 'all' value) any restrictions will be omitted
 #' @param add Type of unfolding. TRUE value shows that filter will be a part of
 #'   complex restriction and should be added
-#' @return Unfolded into string filter condition
-#' @rdname build_request
+#' @return Filter condition unfolded into string
 #' @export
 buildReqFilter <- function(field, conds, add=TRUE){
   # Входные ограничения могут отсутствовать, поэтому делается проверка, а не ассерт
@@ -40,16 +34,16 @@ buildReqFilter <- function(field, conds, add=TRUE){
 
 #' Build SQL request restriction based on user-defined set of fields
 #'
-#' @param begin Start date-range
-#' @param end End of date-range
-#' @param region Region filter
-#' @param prefix Prefix filter
-#' @param channel Channel filter
-#' @param event Event filter
-#' @param segment Segment filter
-#' @param serial_mask Substring to find in serian number whithin %LIKE% condition
+#' All
+#' @param begin Start date (strictly Date class)
+#' @param end End date, (strictly Date class)
+#' @param region Region filter (string vector)
+#' @param prefix Prefix filter (string vector)
+#' @param channel Channel filter (string vector)
+#' @param event Event filter (string vector)
+#' @param segment Segment filter (string vector)
+#' @param serial_mask String to find in serial number whithin \%LIKE\% condition
 #' @return Limits unfolded into string
-#' @rdname build_request
 #' @export
 buildReqLimits <- function(begin, end, region=NULL, prefix=NULL, channel=NULL, event=NULL,
                            segment=NULL, serial_mask="") {
@@ -71,7 +65,7 @@ buildReqLimits <- function(begin, end, region=NULL, prefix=NULL, channel=NULL, e
     buildReqFilter("segment", segment, add=TRUE),
     buildReqFilter("channelId", channel, add=TRUE),
     buildReqFilter("switchEvent", event, add=TRUE),
-    ifelse(serial_mask=="", "", с("AND like(serial, '%", serial_mask, "%') ")),
+    ifelse(serial_mask=="", "", c("AND like(serial, '%", serial_mask, "%') ")),
     sep=" ")
 
   # нормализуем пробелы

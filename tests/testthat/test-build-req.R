@@ -1,4 +1,4 @@
-context("Build limit filter")
+context("Build unite filter")
 
 test_that("field value is absent", {
   expect_equal(buildReqFilter("field", NULL), " ")
@@ -43,7 +43,3 @@ test_that("Check correct behavior", {
                       "AND region IN ('1') AND prefix IN ('2') AND segment IN ('3') AND channelId IN ('4') ",
                       "AND switchEvent IN ('5') "))
 })
-
-
-
-
