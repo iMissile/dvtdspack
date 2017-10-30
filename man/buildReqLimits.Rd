@@ -4,13 +4,20 @@
 \alias{buildReqLimits}
 \title{Build SQL request restriction based on user-defined set of fields}
 \usage{
-buildReqLimits(begin, end, region = NULL, prefix = NULL, channel = NULL,
-  event = NULL, segment = NULL, serial_mask = "")
+buildReqLimits(begin, end, min_duration = 0 * 60, max_duration = 2 * 60 *
+  60, region = NULL, prefix = NULL, channel = NULL, event = NULL,
+  segment = NULL, serial_mask = "")
 }
 \arguments{
 \item{begin}{Start date (strictly Date class)}
 
 \item{end}{End date, (strictly Date class)}
+
+\item{min_duration}{Minimal watch duration (seconds) to include watch event
+in statistics. All below will be declined}
+
+\item{max_duration}{Maximal watch duration (seconds) to include watch event
+in statistics. All above will be declined}
 
 \item{region}{Region filter (string vector)}
 

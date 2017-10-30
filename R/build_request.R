@@ -37,6 +37,10 @@ buildReqFilter <- function(field, conds, add=TRUE){
 #' All
 #' @param begin Start date (strictly Date class)
 #' @param end End date, (strictly Date class)
+#' @param min_duration Minimal watch duration (seconds) to include watch event
+#'   in statistics. All below will be declined
+#' @param max_duration Maximal watch duration (seconds) to include watch event
+#'   in statistics. All above will be declined
 #' @param region Region filter (string vector)
 #' @param prefix Prefix filter (string vector)
 #' @param channel Channel filter (string vector)
@@ -45,7 +49,8 @@ buildReqFilter <- function(field, conds, add=TRUE){
 #' @param serial_mask String to find in serial number whithin \%LIKE\% condition
 #' @return Limits unfolded into string
 #' @export
-buildReqLimits <- function(begin, end, region=NULL, prefix=NULL, channel=NULL, event=NULL,
+buildReqLimits <- function(begin, end, min_duration=0*60, max_duration=2*60*60,
+                           region=NULL, prefix=NULL, channel=NULL, event=NULL,
                            segment=NULL, serial_mask="") {
   # region, prefix, channel -- могут быть векторами
   # params <- list(...)
@@ -58,8 +63,7 @@ buildReqLimits <- function(begin, end, region=NULL, prefix=NULL, channel=NULL, e
 
   res <- stringi::stri_join(
     stringi::stri_join(" date>='", begin, "' AND date<='", end, "'", sep=""),
-    # указали жестко длительность, в секундах
-    "AND duration>0*60 AND duration <2*60*60",
+    stringi::stri_join("AND duration>=", min_duration, " AND duration<=", max_duration),
     buildReqFilter("region", region, add=TRUE),
     buildReqFilter("prefix", prefix, add=TRUE),
     buildReqFilter("segment", segment, add=TRUE),

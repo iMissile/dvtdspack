@@ -2,10 +2,10 @@
 % Please edit documentation in R/visual_styles.R
 \name{initRCfontInCairo}
 \alias{initRCfontInCairo}
-\title{Cairo initialization with Roboto Condensed font}
+\title{Cairo initialization in linux with Roboto Condensed font}
 \usage{
 initRCfontInCairo()
 }
 \description{
-Cairo initialization with Roboto Condensed font
+Cairo initialization in linux with Roboto Condensed font
 }

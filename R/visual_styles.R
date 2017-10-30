@@ -1,6 +1,5 @@
 #' Custom ggplot theme based on ipsum-theme
 #'
-#' @importFrom futile.logger flog.info
 #' @importFrom hrbrthemes theme_ipsum_rc
 #'
 #' @param target Target for plot. May be on of "screen" or "word_A4". Target will

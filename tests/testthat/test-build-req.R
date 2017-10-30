@@ -34,12 +34,12 @@ test_that("Serial_mask must be string (empty or not)", {
 
 test_that("Check correct behavior", {
   expect_equal(buildReqLimits(begin=as.Date("2016-09-12"), end=as.Date("2016-09-14")),
-               " date>='2016-09-12' AND date<='2016-09-14' AND duration>0*60 AND duration <2*60*60 ")
+               " date>='2016-09-12' AND date<='2016-09-14' AND duration>=0 AND duration<=7200 ")
   expect_equal(buildReqLimits(begin=as.Date("2016-09-12"), end=as.Date("2016-09-14"), segment=5),
-               " date>='2016-09-12' AND date<='2016-09-14' AND duration>0*60 AND duration <2*60*60 ")
+               " date>='2016-09-12' AND date<='2016-09-14' AND duration>=0 AND duration<=7200 ")
   expect_equal(buildReqLimits(begin=as.Date("2016-09-12"), end=as.Date("2016-09-14"),
                               region="1", prefix="2", segment="3", channel="4", event="5"),
-               paste0(" date>='2016-09-12' AND date<='2016-09-14' AND duration>0*60 AND duration <2*60*60 ",
+               paste0(" date>='2016-09-12' AND date<='2016-09-14' AND duration>=0 AND duration<=7200 ",
                       "AND region IN ('1') AND prefix IN ('2') AND segment IN ('3') AND channelId IN ('4') ",
                       "AND switchEvent IN ('5') "))
 })
