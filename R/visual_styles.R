@@ -1,7 +1,5 @@
 #' Custom ggplot theme based on ipsum-theme
 #'
-#' @importFrom hrbrthemes theme_ipsum_rc
-#'
 #' @param target Target for plot. May be on of "screen" or "word_A4". Target will
 #'   affect on size, font, colour, resolution, etc.
 #' @export
@@ -11,11 +9,11 @@ theme_dvt <- function(target="screen"){
 
   ret <- purrr::when(
     target,
-    .=="screen"  ~ theme_ipsum_rc(base_size=20, axis_title_size=18,
-                                  subtitle_size=15, strip_text_size=16),
-    .=="word_A4" ~ theme_ipsum_rc(base_size=14, axis_title_size=12,
-                                  subtitle_size=11, strip_text_size=10),
-    ~ theme_ipsum_rc()
+    .=="screen"  ~ hrbrthemes::theme_ipsum_rc(base_size=20, axis_title_size=18,
+                                              subtitle_size=15, strip_text_size=16),
+    .=="word_A4" ~ hrbrthemes::theme_ipsum_rc(base_size=14, axis_title_size=12,
+                                              subtitle_size=11, strip_text_size=10),
+    ~ hrbrthemes::theme_ipsum_rc()
   )
 
   # залогируем для контроля прохождения изменения

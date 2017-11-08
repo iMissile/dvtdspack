@@ -15,6 +15,7 @@ Imports:
     checkmate,
     stringi,
     purrr,
-    lubridate
+    lubridate,
+    hrbrthemes
 Suggests: 
     testthat

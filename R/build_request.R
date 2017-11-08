@@ -76,5 +76,33 @@ buildReqLimits <- function(begin, end, min_duration=0*60, max_duration=2*60*60,
   stringi::stri_replace_all_regex(res, "(\\s+)", " ")
 }
 
+#' Execute SQL request at remote ClickHouse, analyze and process errors in Shiny context
+#'
+#' All
+#' @param conn ClickHouse connection object
+#' @param req Formatted SQL request (string)
+#' @return Data.frame recieved from ClickHouse
+#' @export
+bad_getChQuery <- function(conn, req){
+  checkmate::qassert(req, "S=1")
+
+  futile.logger::flog.info(flue::glue("DB request: {req}"))
+  tictoc::tic()
+  resp <- purrr::safely(dbGetQuery)(conn, req)
+  if(is.null(resp$result)) {
+    futile.logger::flog.error(glue("CH request error: '{resp$error}'"))
+    shiny::showNotification("Некорректный ответ от бэкенда", type="error")
+    return(NULL)
+  }
+
+  # colums must be defined but values can be absent
+  df <-  checkmate::assertDataFrame(resp$result, all.missing=TRUE, min.cols=1)
+
+  futile.logger::flog.info(glue::glue("---------- RAW data query: {capture.output(tictoc::toc())} ----------"))
+  futile.logger::flog.info(glue::glue("Loaded {nrow(df)} rows"))
+  futile.logger::flog.info(glue::glue("Table: {capture.output(head(df, 2))}"))
+
+  df
+}
 
 # lintr::lint("./R/build_req_filter.R")
