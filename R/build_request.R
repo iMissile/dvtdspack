@@ -69,7 +69,7 @@ buildReqLimits <- function(begin, end, min_duration=0*60, max_duration=2*60*60,
     buildReqFilter("segment", segment, add=TRUE),
     buildReqFilter("channelId", channel, add=TRUE),
     buildReqFilter("switchEvent", event, add=TRUE),
-    ifelse(serial_mask=="", "", c("AND like(serial, '%", serial_mask, "%') ")),
+    ifelse(serial_mask=="", "", stringi::stri_join("AND like(serial, '%", serial_mask, "%') ")),
     sep=" ")
 
   # нормализуем пробелы

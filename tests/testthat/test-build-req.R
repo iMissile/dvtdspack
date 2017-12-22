@@ -33,6 +33,9 @@ test_that("Serial_mask must be string (empty or not)", {
 })
 
 test_that("Check correct behavior", {
+  expect_equal(buildReqLimits(begin=as.Date("2016-09-12"), end=as.Date("2016-09-14"), serial_mask="5674"),
+               paste0(" date>='2016-09-12' AND date<='2016-09-14' AND duration>=0 AND duration<=7200 ",
+                      "AND like(serial, '%5674%') "))
   expect_equal(buildReqLimits(begin=as.Date("2016-09-12"), end=as.Date("2016-09-14")),
                " date>='2016-09-12' AND date<='2016-09-14' AND duration>=0 AND duration<=7200 ")
   expect_equal(buildReqLimits(begin=as.Date("2016-09-12"), end=as.Date("2016-09-14"), segment=5),
