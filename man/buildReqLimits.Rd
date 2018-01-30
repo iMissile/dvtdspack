@@ -4,7 +4,7 @@
 \alias{buildReqLimits}
 \title{Build SQL request restriction based on user-defined set of fields}
 \usage{
-buildReqLimits(begin, end, min_duration = 0 * 60, max_duration = 2 * 60 *
+buildReqLimits(begin, end, min_duration = 0 * 60, max_duration = 12 * 60 *
   60, region = NULL, prefix = NULL, channel = NULL, event = NULL,
   segment = NULL, serial_mask = "")
 }

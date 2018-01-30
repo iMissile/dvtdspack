@@ -49,7 +49,7 @@ buildReqFilter <- function(field, conds, add=TRUE){
 #' @param serial_mask String to find in serial number whithin \%LIKE\% condition
 #' @return Limits unfolded into string
 #' @export
-buildReqLimits <- function(begin, end, min_duration=0*60, max_duration=2*60*60,
+buildReqLimits <- function(begin, end, min_duration=0*60, max_duration=12*60*60,
                            region=NULL, prefix=NULL, channel=NULL, event=NULL,
                            segment=NULL, serial_mask="") {
   # region, prefix, channel -- могут быть векторами
