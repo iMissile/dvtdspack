@@ -46,3 +46,11 @@ test_that("Check correct behavior", {
                       "AND region IN ('1') AND prefix IN ('2') AND segment IN ('3') AND channelId IN ('4') ",
                       "AND switchevent IN ('5') "))
 })
+
+test_that("Check new buildReqLimitsExt behavior", {
+  expect_equal(buildReqLimitsExt(begin=as.Date("2016-09-12"), end=as.Date("2016-09-14"),
+                              region="1", prefix="2", segment="3", channel="4", event="5"),
+               paste0(" date>='2016-09-12' AND date<='2016-09-14' AND duration>=0 AND duration<=43200 ",
+                      "AND region IN ('1') AND prefix IN ('2') AND segment IN ('3') AND channel IN ('4') ",
+                      "AND event IN ('5') "))
+})

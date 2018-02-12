@@ -21,7 +21,7 @@ buildReqFilter <- function(field, conds, add=TRUE){
       field,
       " IN (",
       stringi::stri_join(purrr::map_chr(conds, ~stringi::stri_join("'", .x, "'", sep="")),
-                                  sep=" ", collapse=","),
+                         sep=" ", collapse=","),
       ") ",
       sep="", collapse=""
       )
@@ -71,6 +71,40 @@ buildReqLimits <- function(begin, end, min_duration=0*60, max_duration=12*60*60,
     buildReqFilter("switchevent", event, add=TRUE),
     ifelse(serial_mask=="", "", stringi::stri_join("AND like(serial, '%", serial_mask, "%') ")),
     sep=" ")
+
+  # нормализуем пробелы
+  stringi::stri_replace_all_regex(res, "(\\s+)", " ")
+}
+
+#' Build SQL request restriction based on user-defined set of fields
+#'
+#' All
+#' @param begin Start date (strictly Date class)
+#' @param end End date, (strictly Date class)
+#' @param min_duration Minimal watch duration (seconds) to include watch event
+#'   in statistics. All below will be declined
+#' @param max_duration Maximal watch duration (seconds) to include watch event
+#'   in statistics. All above will be declined
+#' @param serial_mask String to find in serial number whithin \%LIKE\% condition
+#' @param ... List with additional named parameters "db_field=string vector"
+#' @return Limits unfolded into string
+#' @export
+buildReqLimitsExt <- function(begin, end, min_duration=0*60, max_duration=12*60*60, serial_mask="", ...) {
+  # ... -- могут быть векторами
+  lvals <- list(...)
+  # browser()
+  # Убедимся, что на вход поступают допустимые значения
+  checkmate::assertDate(begin, any.missing=FALSE, len=1, null.ok=FALSE)
+  checkmate::assertDate(end, any.missing=FALSE, len=1, null.ok=FALSE)
+  checkmate::qassert(serial_mask, "S=1")
+
+  res <- stringi::stri_join(
+    stringi::stri_join(" date>='", begin, "' AND date<='", end, "'", sep=""),
+    stringi::stri_join("AND duration>=", min_duration, " AND duration<=", max_duration),
+    stringi::stri_join(purrr::map2_chr(names(lvals), lvals,
+                                       ~buildReqFilter(field=.x, conds=.y, add=TRUE)), collapse=" "),
+    ifelse(serial_mask=="", "", stringi::stri_join("AND like(serial, '%", serial_mask, "%') ")),
+    sep=" ", collapse=" ")
 
   # нормализуем пробелы
   stringi::stri_replace_all_regex(res, "(\\s+)", " ")

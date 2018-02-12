@@ -3,6 +3,7 @@
 export(bad_getChQuery)
 export(buildReqFilter)
 export(buildReqLimits)
+export(buildReqLimitsExt)
 export(hello)
 export(hgroup.enum)
 export(initRCfontInCairo)
