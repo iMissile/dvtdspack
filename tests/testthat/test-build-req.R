@@ -11,6 +11,7 @@ test_that("field value is non-string", {
   expect_equal(buildReqFilter("field", c(1, 2)), " ")
   expect_equal(buildReqFilter("field", list(d="as_is", v=2)), " ")
 })
+# необходимо еще проверить, что field = "", а в conds -- именованный список
 
 test_that("field value is string", {
   expect_equal(buildReqFilter("field", "all"), " ")

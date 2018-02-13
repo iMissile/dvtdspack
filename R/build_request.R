@@ -15,6 +15,7 @@ buildReqFilter <- function(field, conds, add=TRUE){
   # Допустимо либо значение "all", либо string vector, но никак не числа
   # теоретически могут приходить от Shiny элементов NA, NULL, character(0)
 
+  ret <- " "
   if (checkmate::qtest(conds, "S+") & all(conds!="all")){
     ret <- stringi::stri_join(
       ifelse(add, " AND ", " "),
@@ -24,11 +25,8 @@ buildReqFilter <- function(field, conds, add=TRUE){
                          sep=" ", collapse=","),
       ") ",
       sep="", collapse=""
-      )
-  } else {
-    ret <- " "
+    )
   }
-
   ret
 }
 
@@ -53,7 +51,6 @@ buildReqLimits <- function(begin, end, min_duration=0*60, max_duration=12*60*60,
                            region=NULL, prefix=NULL, channel=NULL, event=NULL,
                            segment=NULL, serial_mask="") {
   # region, prefix, channel -- могут быть векторами
-  # params <- list(...)
   # Убедимся, что на вход поступают допустимые значения
   # checkmate::assertNames(names(params), subset.of=c("region", "prefix", "segment", "channel", "event"))
   # checkmate::checkDate(c(lubridate::ymd("17-12-03"), lubridate::ymd("17-12-07")), any.missing=FALSE, len=2, null.ok=FALSE)
@@ -71,7 +68,6 @@ buildReqLimits <- function(begin, end, min_duration=0*60, max_duration=12*60*60,
     buildReqFilter("switchevent", event, add=TRUE),
     ifelse(serial_mask=="", "", stringi::stri_join("AND like(serial, '%", serial_mask, "%') ")),
     sep=" ")
-
   # нормализуем пробелы
   stringi::stri_replace_all_regex(res, "(\\s+)", " ")
 }
@@ -91,8 +87,7 @@ buildReqLimits <- function(begin, end, min_duration=0*60, max_duration=12*60*60,
 #' @export
 buildReqLimitsExt <- function(begin, end, min_duration=0*60, max_duration=12*60*60, serial_mask="", ...) {
   # ... -- могут быть векторами
-  lvals <- list(...)
-  # browser()
+  lvals <- rlang::dots_list(...)
   # Убедимся, что на вход поступают допустимые значения
   checkmate::assertDate(begin, any.missing=FALSE, len=1, null.ok=FALSE)
   checkmate::assertDate(end, any.missing=FALSE, len=1, null.ok=FALSE)
@@ -105,7 +100,6 @@ buildReqLimitsExt <- function(begin, end, min_duration=0*60, max_duration=12*60*
                                        ~buildReqFilter(field=.x, conds=.y, add=TRUE)), collapse=" "),
     ifelse(serial_mask=="", "", stringi::stri_join("AND like(serial, '%", serial_mask, "%') ")),
     sep=" ", collapse=" ")
-
   # нормализуем пробелы
   stringi::stri_replace_all_regex(res, "(\\s+)", " ")
 }
