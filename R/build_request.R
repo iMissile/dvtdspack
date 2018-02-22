@@ -104,33 +104,47 @@ buildReqLimitsExt <- function(begin, end, min_duration=0*60, max_duration=12*60*
   stringi::stri_replace_all_regex(res, "(\\s+)", " ")
 }
 
-#' Execute SQL request at remote ClickHouse, analyze and process errors in Shiny context
+#' Build SQL request restriction based on user-defined set of fields
 #'
-#' All
-#' @param conn ClickHouse connection object
-#' @param req Formatted SQL request (string)
-#' @return Data.frame recieved from ClickHouse
+#' @importFrom magrittr %>%
+#'
+#' @param dates - a named list of date ranges [min, max],
+#' names must be the names of the corresponding DB fields
+#' @param ranges - a named list of numeric ranges [min, max],
+#' names must be the names of the corresponding DB fields
+#' @param masks - named vector of match string
+#' @param ... - set of named dictionary string values (atomic or vector)
+#'
+#' @return
 #' @export
-bad_getChQuery <- function(conn, req){
-  checkmate::qassert(req, "S=1")
+buildReqLimitsExt2 <- function(dates=NULL, ranges=NULL, masks="", ...) {
+  # ... -- могут быть векторами
+  # Убедимся, что на вход поступают допустимые значения
+  checkmate::assertList(dates, types="Date", any.missing=FALSE, unique=FALSE, null.ok=FALSE)
+  checkmate::assertList(ranges, any.missing=FALSE, unique=FALSE, null.ok=FALSE)
+  checkmate::qassert(masks, "S>=1")
+  lvals <- rlang::dots_list(...)
 
-  futile.logger::flog.info(flue::glue("DB request: {req}"))
-  tictoc::tic()
-  resp <- purrr::safely(dbGetQuery)(conn, req)
-  if(is.null(resp$result)) {
-    futile.logger::flog.error(glue("CH request error: '{resp$error}'"))
-    shiny::showNotification("Некорректный ответ от бэкенда", type="error")
-    return(NULL)
-  }
+  dates_part <- dates %>%
+    purrr::map2(names(.), ~glue::glue("{.y} BETWEEN '{.x[1]}' AND '{.x[2]}'"))
+  ranges_part <- ranges %>%
+    purrr::map2(names(.), ~glue::glue("{.y} BETWEEN {.x[1]} AND {.x[2]}"))
+  masks_part <- tibble::enframe(masks) %>%
+    glue::glue_data("AND like({name}, '%{value}%')") %>%
+    stringi::stri_join(collapse=" ")
+  # print(glue("dates_part={dates_part}, masks_part={masks_part}"))
+  # browser()
+  # dates\ranges limits must be aligned to level1
 
-  # colums must be defined but values can be absent
-  df <-  checkmate::assertDataFrame(resp$result, all.missing=TRUE, min.cols=1)
-
-  futile.logger::flog.info(glue::glue("---------- RAW data query: {capture.output(tictoc::toc())} ----------"))
-  futile.logger::flog.info(glue::glue("Loaded {nrow(df)} rows"))
-  futile.logger::flog.info(glue::glue("Table: {capture.output(head(df, 2))}"))
-
-  df
+  res <- stringi::stri_join(
+    stringi::stri_join(unlist(c(dates_part, ranges_part)), collapse=" AND "),
+    stringi::stri_join(purrr::map2_chr(names(lvals), lvals,
+                                       ~buildReqFilter(field=.x, conds=.y, add=TRUE)), collapse=" "),
+    dplyr::if_else(masks=="", "", masks_part),
+    sep=" ", collapse=" ")
+  # trim whitespaces
+  stringi::stri_replace_all_regex(res, "(\\s+)", " ")  %>%
+    trimws()
 }
 
 # lintr::lint("./R/build_req_filter.R")

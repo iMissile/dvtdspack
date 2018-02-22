@@ -55,3 +55,42 @@ test_that("Check new buildReqLimitsExt behavior", {
                       "AND region IN ('1') AND prefix IN ('2') AND segment IN ('3') AND channel IN ('4') ",
                       "AND event IN ('5') "))
 })
+
+context("Build request limits v2")
+test_that("Check correct behavior", {
+  # expect_equal(buildReqLimits(begin=as.Date("2016-09-12"), end=as.Date("2016-09-14"), serial_mask="5674"),
+  #              paste0(" date>='2016-09-12' AND date<='2016-09-14' AND duration>=0 AND duration<=43200 ",
+  #                     "AND like(serial, '%5674%') "))
+  # expect_equal(buildReqLimits(begin=as.Date("2016-09-12"), end=as.Date("2016-09-14")),
+  #              " date>='2016-09-12' AND date<='2016-09-14' AND duration>=0 AND duration<=43200 ")
+  # expect_equal(buildReqLimits(begin=as.Date("2016-09-12"), end=as.Date("2016-09-14"), segment=5),
+  #              " date>='2016-09-12' AND date<='2016-09-14' AND duration>=0 AND duration<=43200 ")
+
+  dates <- list(
+    date=c(as.Date("2016-09-12"), as.Date("2016-09-14")),
+    activated_at=c(as.Date("2016-09-12"), as.Date("2018-02-13"))
+  )
+  ranges <- list(
+    duration=c(rlang::expr(1*60),rlang::expr(5*60*60))
+  )
+  res <- glue::glue("date BETWEEN '2016-09-12' AND '2016-09-14' AND activated_at \\
+              BETWEEN '2016-09-12' AND '2018-02-13' AND \\
+              duration BETWEEN 1 * 60 AND 5 * 60 * 60 \\
+              AND region IN ('1') AND prefix IN ('2') \\
+              AND event IN ('5')") %>%
+    as.character()
+  expect_equal(buildReqLimitsExt2(dates=dates, ranges=ranges, region="1", prefix="2", event="5"),
+               res)
+
+  ranges <- list(
+    duration=c(10, 5*60*60)
+  )
+  res <- glue::glue("date BETWEEN '2016-09-12' AND '2016-09-14' AND activated_at \\
+              BETWEEN '2016-09-12' AND '2018-02-13' AND \\
+              duration BETWEEN 10 AND 18000 \\
+              AND region IN ('1') AND prefix IN ('2') \\
+              AND event IN ('5')") %>%
+    as.character()
+  expect_equal(buildReqLimitsExt2(dates=dates, ranges=ranges, region="1", prefix="2", event="5"),
+               res)
+})

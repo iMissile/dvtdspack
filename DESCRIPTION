@@ -1,7 +1,7 @@
 Package: dvtdspack
 Type: Package
 Title: Set of Functions Used in DVT Shiny App
-Version: 0.1.1
+Version: 0.1.2
 Authors@R: person("Ilya", "Shutov", email="ilya.shutov@media-tel.ru", role=c("aut", "cre"))
 Maintainer: The package maintainer <ilya.shutov@media-tel.ru>
 Description: More about what it does (maybe more than one line)
@@ -16,6 +16,7 @@ Imports:
     stringi,
     purrr,
     lubridate,
-    hrbrthemes
+    hrbrthemes,
+    magrittr
 Suggests: 
     testthat
