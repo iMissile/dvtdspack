@@ -129,6 +129,7 @@ buildReqLimitsExt2 <- function(dates=NULL, ranges=NULL, masks="", ...) {
     purrr::map2(names(.), ~glue::glue("{.y} BETWEEN '{.x[1]}' AND '{.x[2]}'"))
   ranges_part <- ranges %>%
     purrr::map2(names(.), ~glue::glue("{.y} BETWEEN {.x[1]} AND {.x[2]}"))
+  # если маска не одна, а несколько, но они все пустые, то будет коллизия по длинам
   masks_part <- tibble::enframe(masks) %>%
     glue::glue_data("AND like({name}, '%{value}%')") %>%
     stringi::stri_join(collapse=" ")
@@ -144,6 +145,61 @@ buildReqLimitsExt2 <- function(dates=NULL, ranges=NULL, masks="", ...) {
     sep=" ", collapse=" ")
   # trim whitespaces
   stringi::stri_replace_all_regex(res, "(\\s+)", " ")  %>%
+    trimws()
+}
+
+#' Build SQL request restriction based on user-defined set of fields
+#'
+#' @importFrom magrittr %>%
+#' @importFrom assertr verify
+#' @importFrom assertr has_all_names
+#'
+#' @param dates - a tibble with date ranges: [name, min, max],
+#' names must be the names of the corresponding DB fields
+#' @param ranges - a tibble with numeric ranges: [name, min, max],
+#' names must be the names of the corresponding DB fields
+#' @param masks - a tibble with masks values: [name, value]
+#' @param ... - set of named dictionary string values (atomic or vector)
+#'
+#' @return
+#' @export
+buildReqLimitsExt3 <- function(dates=NULL, ranges=NULL, masks=NULL, ...) {
+  # ... -- могут быть векторами
+  # Убедимся, что на вход поступают допустимые значения
+  checkmate::assertDataFrame(dates, ncols=3) %>%
+    assertr::assert(has_all_names("name", "min", "max"))
+  checkmate::assertDataFrame(ranges, ncols=3) %>%
+    assertr::assert(has_all_names("name", "min", "max"))
+  checkmate::assertDataFrame(masks, ncols=2) %>%
+    assertr::assert(has_all_names("name", "value"))
+
+  lvals <- rlang::dots_list(...)
+
+  dates_part <- dates %>%
+    glue::glue_data("{name} BETWEEN '{min}' AND '{max}'")
+  ranges_part <- ranges %>%
+    glue::glue_data("{name} BETWEEN {min} AND {max}")
+  # объединим все диапазоны, после glue мы имеем character vector
+  granges <- c(dates_part, ranges_part) %>%
+    stringi::stri_join(collapse=" AND ")
+
+  masks_part <- masks %>%
+    dplyr::filter(value!="") %>%
+    glue::glue_data("AND like({name}, '%{value}%')") %>%
+    stringi::stri_join(collapse=" ")
+
+  params_part <- purrr::map2_chr(names(lvals), lvals,
+                                 ~buildReqFilter(field=.x, conds=.y, add=TRUE)) %>%
+    stringi::stri_join(collapse=" ")
+
+  # собираем все воедино
+  res <- stringi::stri_join(
+    ifelse(identical(granges, character(0)), "", granges),
+    ifelse(identical(params_part, character(0)), "", params_part),
+    ifelse(identical(masks_part, character(0)), "", masks_part),
+    sep=" ", collapse=" ") %>%
+    # trim whitespaces
+    stringi::stri_replace_all_regex("(\\s+)", " ")  %>%
     trimws()
 }
 

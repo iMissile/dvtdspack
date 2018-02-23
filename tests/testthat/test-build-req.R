@@ -94,3 +94,31 @@ test_that("Check correct behavior", {
   expect_equal(buildReqLimitsExt2(dates=dates, ranges=ranges, region="1", prefix="2", event="5"),
                res)
 })
+
+context("Build request limits v3")
+test_that("Check correct behavior", {
+  dates <- tibble::tribble(
+    ~name, ~min, ~max,
+    "date", as.Date("2016-09-12"), as.Date("2016-09-14"),
+    "activated_at", as.Date("2016-09-12"), as.Date("2018-02-13")
+  )
+  ranges <- tibble::tribble(
+    ~name, ~min, ~max,
+    "id", 23, 54
+  )
+  masks <- tibble::tribble(
+    ~name, ~value,
+    "serial", "#43",
+    "account_id", ""
+  )
+
+
+  res <- glue::glue("date BETWEEN '2016-09-12' AND '2016-09-14' AND activated_at \\
+                    BETWEEN '2016-09-12' AND '2018-02-13' AND \\
+                    id BETWEEN 23 AND 54 AND region IN ('1') AND prefix IN ('2') \\
+                    AND event IN ('5') AND like(serial, '%#43%')") %>%
+    as.character()
+  expect_equal(buildReqLimitsExt3(dates=dates, ranges=ranges, masks=masks,
+                                  region="1", prefix="2", event="5"),
+               res)
+})
