@@ -166,27 +166,32 @@ buildReqLimitsExt2 <- function(dates=NULL, ranges=NULL, masks="", ...) {
 buildReqLimitsExt3 <- function(dates=NULL, ranges=NULL, masks=NULL, ...) {
   # ... -- могут быть векторами
   # Убедимся, что на вход поступают допустимые значения
-  checkmate::assertDataFrame(dates, ncols=3) %>%
-    assertr::assert(has_all_names("name", "min", "max"))
-  checkmate::assertDataFrame(ranges, ncols=3) %>%
-    assertr::assert(has_all_names("name", "min", "max"))
-  checkmate::assertDataFrame(masks, ncols=2) %>%
-    assertr::assert(has_all_names("name", "value"))
+
 
   lvals <- rlang::dots_list(...)
 
-  dates_part <- dates %>%
-    glue::glue_data("{name} BETWEEN '{min}' AND '{max}'")
-  ranges_part <- ranges %>%
-    glue::glue_data("{name} BETWEEN {min} AND {max}")
-  # объединим все диапазоны, после glue мы имеем character vector
-  granges <- c(dates_part, ranges_part) %>%
-    stringi::stri_join(collapse=" AND ")
+  dates_part <- if(!is.null(dates)) {
+    checkmate::assertDataFrame(dates, ncols=3) %>%
+      assertr::assert(has_all_names("name", "min", "max")) %>%
+      glue::glue_data("{name} BETWEEN '{min}' AND '{max}'")
+  } else { character(0) }
 
-  masks_part <- masks %>%
-    dplyr::filter(value!="") %>%
-    glue::glue_data("AND like({name}, '%{value}%')") %>%
-    stringi::stri_join(collapse=" ")
+  ranges_part <- if(!is.null(ranges)) {
+    checkmate::assertDataFrame(ranges, ncols=3) %>%
+      assertr::assert(has_all_names("name", "min", "max")) %>%
+      glue::glue_data("{name} BETWEEN {min} AND {max}")
+  } else { character(0) }
+
+  # объединим все диапазоны, после glue мы имеем character vector
+  granges <- stringi::stri_join(c(dates_part, ranges_part), collapse=" AND ")
+
+  masks_part <- if(!is.null(masks)) {
+    checkmate::assertDataFrame(masks, ncols=2) %>%
+      assertr::assert(has_all_names("name", "value")) %>%
+      dplyr::filter(value!="") %>%
+      glue::glue_data("AND like({name}, '%{value}%')") %>%
+      stringi::stri_join(collapse=" ")
+  } else { character(0) }
 
   params_part <- purrr::map2_chr(names(lvals), lvals,
                                  ~buildReqFilter(field=.x, conds=.y, add=TRUE)) %>%

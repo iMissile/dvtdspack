@@ -112,7 +112,6 @@ test_that("Check correct behavior", {
     "account_id", ""
   )
 
-
   res <- glue::glue("date BETWEEN '2016-09-12' AND '2016-09-14' AND activated_at \\
                     BETWEEN '2016-09-12' AND '2018-02-13' AND \\
                     id BETWEEN 23 AND 54 AND region IN ('1') AND prefix IN ('2') \\
@@ -122,3 +121,11 @@ test_that("Check correct behavior", {
                                   region="1", prefix="2", event="5"),
                res)
 })
+
+test_that("Check NULL arguments", {
+  expect_equal(buildReqLimitsExt3(dates=NULL, ranges=NULL, masks=NULL, region="1"),
+               "AND region IN ('1')")
+
+})
+
+# TODO: Check asserts in BuildReqLimits
