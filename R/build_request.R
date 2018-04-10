@@ -19,11 +19,12 @@ buildReqFilter <- function(field, conds, add=TRUE){
   if (checkmate::qtest(conds, "S+") & all(conds!="all")){
     ret <- stringi::stri_join(
       ifelse(add, " AND ", " "),
-      field,
-      " IN (",
-      stringi::stri_join(purrr::map_chr(conds, ~stringi::stri_join("'", .x, "'", sep="")),
-                         sep=" ", collapse=","),
-      ") ",
+      dbplyr::escape(unname(field), collapse=NULL, parens=FALSE),
+      " IN ",
+      dbplyr::escape(unname(conds), collapse=", ", parens=TRUE),
+      # stringi::stri_join(purrr::map_chr(conds, ~stringi::stri_join("'", .x, "'", sep="")),
+      #                   sep=" ", collapse=","),
+      #") ",
       sep="", collapse=""
     )
   }
@@ -115,7 +116,7 @@ buildReqLimitsExt <- function(begin, end, min_duration=0*60, max_duration=12*60*
 #' @param masks - named vector of match string
 #' @param ... - set of named dictionary string values (atomic or vector)
 #'
-#' @return
+#' @return escaped SQL request string
 #' @export
 buildReqLimitsExt2 <- function(dates=NULL, ranges=NULL, masks="", ...) {
   # ... -- могут быть векторами
@@ -151,8 +152,7 @@ buildReqLimitsExt2 <- function(dates=NULL, ranges=NULL, masks="", ...) {
 #' Build SQL request restriction based on user-defined set of fields
 #'
 #' @importFrom magrittr %>%
-#' @importFrom assertr verify
-#' @importFrom assertr has_all_names
+#' @importFrom magrittr %T>%
 #'
 #' @param dates - a tibble with date ranges: [name, min, max],
 #' names must be the names of the corresponding DB fields
@@ -161,24 +161,27 @@ buildReqLimitsExt2 <- function(dates=NULL, ranges=NULL, masks="", ...) {
 #' @param masks - a tibble with masks values: [name, value]
 #' @param ... - set of named dictionary string values (atomic or vector)
 #'
-#' @return
+#' @return escaped SQL request string
 #' @export
 buildReqLimitsExt3 <- function(dates=NULL, ranges=NULL, masks=NULL, ...) {
   # ... -- могут быть векторами
-  # Убедимся, что на вход поступают допустимые значения
-
-
   lvals <- rlang::dots_list(...)
 
+  # Убедимся, что на вход поступают допустимые значения
   dates_part <- if(!is.null(dates)) {
-    checkmate::assertDataFrame(dates, ncols=3) %>%
-      assertr::assert(has_all_names("name", "min", "max")) %>%
-      glue::glue_data("{name} BETWEEN '{min}' AND '{max}'")
+    checkmate::assertDataFrame(dates, ncols=3) %T>%
+      {checkmate::assertNames(names(.), type="unique", must.include=c("name", "min", "max"))} %>%
+      # assertr::assert(assertr::has_all_names("name", "min", "max")) %>%
+      # экранируем символы, на всякий случай принимаем меры предосторожности
+      dplyr::mutate_at(dplyr::vars(name, min, max), dbplyr::escape, collapse=NULL, parens=FALSE) %>%
+      glue::glue_data("{name} BETWEEN {min} AND {max}")
   } else { character(0) }
 
   ranges_part <- if(!is.null(ranges)) {
-    checkmate::assertDataFrame(ranges, ncols=3) %>%
-      assertr::assert(has_all_names("name", "min", "max")) %>%
+    checkmate::assertDataFrame(ranges, ncols=3) %T>%
+    {checkmate::assertNames(names(.), type="unique", must.include=c("name", "min", "max"))} %>%
+      # экранируем символы, на всякий случай принимаем меры предосторожности
+      dplyr::mutate_at(dplyr::vars(name, min, max), dbplyr::escape, collapse=NULL, parens=FALSE) %>%
       glue::glue_data("{name} BETWEEN {min} AND {max}")
   } else { character(0) }
 
@@ -186,14 +189,19 @@ buildReqLimitsExt3 <- function(dates=NULL, ranges=NULL, masks=NULL, ...) {
   granges <- stringi::stri_join(c(dates_part, ranges_part), collapse=" AND ")
 
   masks_part <- if(!is.null(masks)) {
-    checkmate::assertDataFrame(masks, ncols=2) %>%
-      assertr::assert(has_all_names("name", "value")) %>%
+    checkmate::assertDataFrame(masks, ncols=2) %T>%
+    {checkmate::assertNames(names(.), type="unique", must.include=c("name", "value"))} %>%
       dplyr::filter(value!="") %>%
-      glue::glue_data("AND like({name}, '%{value}%')") %>%
+      dplyr::mutate(like_value=paste0("%", value, "%")) %>%
+      # экранируем символы, на всякий случай принимаем меры предосторожности
+      dplyr::mutate_at(dplyr::vars(name, like_value), dbplyr::escape, collapse=NULL, parens=FALSE) %>%
+      glue::glue_data("AND like({name}, {like_value})") %>%
       stringi::stri_join(collapse=" ")
   } else { character(0) }
 
-  params_part <- purrr::map2_chr(names(lvals), lvals,
+  # browser()
+  # escape в применении к спискам дает конструкцию "val AS name(val)"
+  params_part <- purrr::map2_chr(names(lvals), unname(lvals),
                                  ~buildReqFilter(field=.x, conds=.y, add=TRUE)) %>%
     stringi::stri_join(collapse=" ")
 

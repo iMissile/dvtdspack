@@ -15,8 +15,8 @@ test_that("field value is non-string", {
 
 test_that("field value is string", {
   expect_equal(buildReqFilter("field", "all"), " ")
-  expect_equal(buildReqFilter("field", "val1"),  " AND field IN ('val1') ")
-  expect_equal(buildReqFilter("field", c("val1", "val2")),  " AND field IN ('val1','val2') ")
+  expect_equal(buildReqFilter("field", "val1"),  " AND 'field' IN ('val1')")
+  expect_equal(buildReqFilter("field", c("val1", "val2")),  " AND 'field' IN ('val1', 'val2')")
 })
 
 context("Build request limits")
@@ -44,16 +44,16 @@ test_that("Check correct behavior", {
   expect_equal(buildReqLimits(begin=as.Date("2016-09-12"), end=as.Date("2016-09-14"),
                               region="1", prefix="2", segment="3", channel="4", event="5"),
                paste0(" date>='2016-09-12' AND date<='2016-09-14' AND duration>=0 AND duration<=43200 ",
-                      "AND region IN ('1') AND prefix IN ('2') AND segment IN ('3') AND channelId IN ('4') ",
-                      "AND switchevent IN ('5') "))
+                      "AND 'region' IN ('1') AND 'prefix' IN ('2') AND 'segment' IN ('3') AND 'channelId' IN ('4') ",
+                      "AND 'switchevent' IN ('5') "))
 })
 
 test_that("Check new buildReqLimitsExt behavior", {
   expect_equal(buildReqLimitsExt(begin=as.Date("2016-09-12"), end=as.Date("2016-09-14"),
                               region="1", prefix="2", segment="3", channel="4", event="5"),
                paste0(" date>='2016-09-12' AND date<='2016-09-14' AND duration>=0 AND duration<=43200 ",
-                      "AND region IN ('1') AND prefix IN ('2') AND segment IN ('3') AND channel IN ('4') ",
-                      "AND event IN ('5') "))
+                      "AND 'region' IN ('1') AND 'prefix' IN ('2') AND 'segment' IN ('3') AND 'channel' IN ('4') ",
+                      "AND 'event' IN ('5') "))
 })
 
 context("Build request limits v2")
@@ -76,8 +76,8 @@ test_that("Check correct behavior", {
   res <- glue::glue("date BETWEEN '2016-09-12' AND '2016-09-14' AND activated_at \\
               BETWEEN '2016-09-12' AND '2018-02-13' AND \\
               duration BETWEEN 1 * 60 AND 5 * 60 * 60 \\
-              AND region IN ('1') AND prefix IN ('2') \\
-              AND event IN ('5')") %>%
+              AND 'region' IN ('1') AND 'prefix' IN ('2') \\
+              AND 'event' IN ('5')") %>%
     as.character()
   expect_equal(buildReqLimitsExt2(dates=dates, ranges=ranges, region="1", prefix="2", event="5"),
                res)
@@ -88,8 +88,8 @@ test_that("Check correct behavior", {
   res <- glue::glue("date BETWEEN '2016-09-12' AND '2016-09-14' AND activated_at \\
               BETWEEN '2016-09-12' AND '2018-02-13' AND \\
               duration BETWEEN 10 AND 18000 \\
-              AND region IN ('1') AND prefix IN ('2') \\
-              AND event IN ('5')") %>%
+              AND 'region' IN ('1') AND 'prefix' IN ('2') \\
+              AND 'event' IN ('5')") %>%
     as.character()
   expect_equal(buildReqLimitsExt2(dates=dates, ranges=ranges, region="1", prefix="2", event="5"),
                res)
@@ -108,24 +108,29 @@ test_that("Check correct behavior", {
   )
   masks <- tibble::tribble(
     ~name, ~value,
-    "serial", "#43",
+    "serial", "#10",
+    "serial2", "_#20_",
     "account_id", ""
   )
 
-  res <- glue::glue("date BETWEEN '2016-09-12' AND '2016-09-14' AND activated_at \\
-                    BETWEEN '2016-09-12' AND '2018-02-13' AND \\
-                    id BETWEEN 23 AND 54 AND region IN ('1') AND prefix IN ('2') \\
-                    AND event IN ('5') AND like(serial, '%#43%')") %>%
+  res <- glue::glue("'date' BETWEEN '2016-09-12' AND '2016-09-14' AND 'activated_at' \\
+                    BETWEEN '2016-09-12' AND '2018-02-13' AND 'id' BETWEEN 23.0 AND 54.0 \\
+                    AND 'region' IN ('1') AND 'prefix' IN ('2') AND 'event' IN ('5', '0') \\
+                    AND like('serial', '%#10%') AND like('serial2', '%_#20_%')") %>%
     as.character()
   expect_equal(buildReqLimitsExt3(dates=dates, ranges=ranges, masks=masks,
-                                  region="1", prefix="2", event="5"),
+                                  region="1", prefix="2", event=c("5", "0")),
                res)
 })
 
 test_that("Check NULL arguments", {
   expect_equal(buildReqLimitsExt3(dates=NULL, ranges=NULL, masks=NULL, region="1"),
-               "AND region IN ('1')")
+               "AND 'region' IN ('1')")
 
 })
 
 # TODO: Check asserts in BuildReqLimits
+
+# TODO: Проверить экранировку совсем параметров
+
+
