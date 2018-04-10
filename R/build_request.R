@@ -19,7 +19,8 @@ buildReqFilter <- function(field, conds, add=TRUE){
   if (checkmate::qtest(conds, "S+") & all(conds!="all")){
     ret <- stringi::stri_join(
       ifelse(add, " AND ", " "),
-      dbplyr::escape(unname(field), collapse=NULL, parens=FALSE),
+      # dbplyr::escape(dbplyr::ident(unname(field)), collapse=NULL, parens=FALSE),
+      unname(field),
       " IN ",
       dbplyr::escape(unname(conds), collapse=", ", parens=TRUE),
       # stringi::stri_join(purrr::map_chr(conds, ~stringi::stri_join("'", .x, "'", sep="")),
@@ -166,14 +167,14 @@ buildReqLimitsExt2 <- function(dates=NULL, ranges=NULL, masks="", ...) {
 buildReqLimitsExt3 <- function(dates=NULL, ranges=NULL, masks=NULL, ...) {
   # ... -- могут быть векторами
   lvals <- rlang::dots_list(...)
+  # имена полей не экранируем
 
   # Убедимся, что на вход поступают допустимые значения
   dates_part <- if(!is.null(dates)) {
     checkmate::assertDataFrame(dates, ncols=3) %T>%
       {checkmate::assertNames(names(.), type="unique", must.include=c("name", "min", "max"))} %>%
-      # assertr::assert(assertr::has_all_names("name", "min", "max")) %>%
       # экранируем символы, на всякий случай принимаем меры предосторожности
-      dplyr::mutate_at(dplyr::vars(name, min, max), dbplyr::escape, collapse=NULL, parens=FALSE) %>%
+      dplyr::mutate_at(dplyr::vars(min, max), dbplyr::escape, collapse=NULL, parens=FALSE) %>%
       glue::glue_data("{name} BETWEEN {min} AND {max}")
   } else { character(0) }
 
@@ -181,7 +182,7 @@ buildReqLimitsExt3 <- function(dates=NULL, ranges=NULL, masks=NULL, ...) {
     checkmate::assertDataFrame(ranges, ncols=3) %T>%
     {checkmate::assertNames(names(.), type="unique", must.include=c("name", "min", "max"))} %>%
       # экранируем символы, на всякий случай принимаем меры предосторожности
-      dplyr::mutate_at(dplyr::vars(name, min, max), dbplyr::escape, collapse=NULL, parens=FALSE) %>%
+      dplyr::mutate_at(dplyr::vars(min, max), dbplyr::escape, collapse=NULL, parens=FALSE) %>%
       glue::glue_data("{name} BETWEEN {min} AND {max}")
   } else { character(0) }
 
@@ -192,9 +193,8 @@ buildReqLimitsExt3 <- function(dates=NULL, ranges=NULL, masks=NULL, ...) {
     checkmate::assertDataFrame(masks, ncols=2) %T>%
     {checkmate::assertNames(names(.), type="unique", must.include=c("name", "value"))} %>%
       dplyr::filter(value!="") %>%
-      dplyr::mutate(like_value=paste0("%", value, "%")) %>%
       # экранируем символы, на всякий случай принимаем меры предосторожности
-      dplyr::mutate_at(dplyr::vars(name, like_value), dbplyr::escape, collapse=NULL, parens=FALSE) %>%
+      dplyr::mutate(like_value=dbplyr::escape(paste0("%", value, "%"), collapse=NULL, parens=FALSE)) %>%
       glue::glue_data("AND like({name}, {like_value})") %>%
       stringi::stri_join(collapse=" ")
   } else { character(0) }
