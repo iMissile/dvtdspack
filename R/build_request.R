@@ -22,7 +22,7 @@ buildReqFilter <- function(field, conds, add=TRUE){
       # dbplyr::escape(dbplyr::ident(unname(field)), collapse=NULL, parens=FALSE),
       unname(field),
       " IN ",
-      dbplyr::escape(unname(conds), collapse=", ", parens=TRUE),
+      dbplyr::escape(unname(conds), con = dbplyr::simulate_dbi(), collapse = ", ", parens = TRUE),
       # stringi::stri_join(purrr::map_chr(conds, ~stringi::stri_join("'", .x, "'", sep="")),
       #                   sep=" ", collapse=","),
       #") ",
@@ -174,7 +174,7 @@ buildReqLimitsExt3 <- function(dates=NULL, ranges=NULL, masks=NULL, ...) {
     checkmate::assertDataFrame(dates, ncols=3) %T>%
       {checkmate::assertNames(names(.), type="unique", must.include=c("name", "min", "max"))} %>%
       # экранируем символы, на всякий случай принимаем меры предосторожности
-      dplyr::mutate_at(dplyr::vars(min, max), dbplyr::escape, collapse=NULL, parens=FALSE) %>%
+      dplyr::mutate_at(dplyr::vars(min, max), dbplyr::escape, con = dbplyr::simulate_dbi(), collapse=NULL, parens=FALSE) %>%
       glue::glue_data("{name} BETWEEN {min} AND {max}")
   } else { character(0) }
 
@@ -182,7 +182,7 @@ buildReqLimitsExt3 <- function(dates=NULL, ranges=NULL, masks=NULL, ...) {
     checkmate::assertDataFrame(ranges, ncols=3) %T>%
     {checkmate::assertNames(names(.), type="unique", must.include=c("name", "min", "max"))} %>%
       # экранируем символы, на всякий случай принимаем меры предосторожности
-      dplyr::mutate_at(dplyr::vars(min, max), dbplyr::escape, collapse=NULL, parens=FALSE) %>%
+      dplyr::mutate_at(dplyr::vars(min, max), dbplyr::escape, con = dbplyr::simulate_dbi(), collapse=NULL, parens=FALSE) %>%
       glue::glue_data("{name} BETWEEN {min} AND {max}")
   } else { character(0) }
 
@@ -194,7 +194,7 @@ buildReqLimitsExt3 <- function(dates=NULL, ranges=NULL, masks=NULL, ...) {
     {checkmate::assertNames(names(.), type="unique", must.include=c("name", "value"))} %>%
       dplyr::filter(value!="") %>%
       # экранируем символы, на всякий случай принимаем меры предосторожности
-      dplyr::mutate(like_value=dbplyr::escape(paste0("%", value, "%"), collapse=NULL, parens=FALSE)) %>%
+      dplyr::mutate(like_value=dbplyr::escape(paste0("%", value, "%"), con = dbplyr::simulate_dbi(), collapse=NULL, parens=FALSE)) %>%
       glue::glue_data("AND like({name}, {like_value})") %>%
       stringi::stri_join(collapse=" ")
   } else { character(0) }
